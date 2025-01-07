@@ -14,6 +14,18 @@
 . $LKP_SRC/lib/debug.sh
 . $LKP_SRC/lib/env.sh
 
+convert_param()
+{
+	if [ "$1" = "thp" ]; then
+		echo 1
+	elif [ "$1" = "nothp" ]; then
+		echo -1
+	else
+		echo "Invalid option for thp_opt"
+		return 2
+	fi
+}
+
 set_perf_path "/lkp/benchmarks/perf/perf"
 
 [ -n "$nr_processes" ] || nr_processes=$nr_cpu
@@ -22,4 +34,4 @@ mb_proc=$(to_mb $mem_proc)
 
 log_cmd numactl --hard || die "Test needs available numa"
 
-log_cmd  $perf bench numa mem -p $nr_processes -t $nr_threads -m -0 -P $mb_proc --thp $thp_opt $extra_params
+log_cmd  $perf bench numa mem -p $nr_processes -t $nr_threads -m -0 -P $mb_proc --thp $(convert_param $thp_opt) $extra_params
