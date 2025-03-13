@@ -2,7 +2,7 @@ short_description: >
 
 description: >
 
-homepage: https://git.samba.org/sahlberg/dbench.git
+homepage: https://www.samba.org/ftp/tridge/dbench
 
 parameters:
  runtime:

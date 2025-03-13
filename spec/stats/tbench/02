@@ -1,0 +1,101 @@
+2025-03-18 05:11:30 tbench -t 60 32 127.0.0.1
+dbench version 4.00 - Copyright Andrew Tridgell 1999-2004
+
+Running for 60 seconds with load '/usr/local/share/client.txt' and minimum warmup 12 secs
+26 of 32 processes prepared for launch   0 sec
+32 of 32 processes prepared for launch   0 sec
+releasing clients
+  32     23051  4510.65 MB/sec  warmup   1 sec  latency 0.565 ms
+  32     46387  4266.38 MB/sec  warmup   2 sec  latency 0.340 ms
+  32     69732  4189.55 MB/sec  warmup   3 sec  latency 0.247 ms
+  32     92838  4139.24 MB/sec  warmup   4 sec  latency 0.272 ms
+  32    115992  4107.52 MB/sec  warmup   5 sec  latency 0.280 ms
+  32    138635  4075.04 MB/sec  warmup   6 sec  latency 0.204 ms
+  32    160785  4039.02 MB/sec  warmup   7 sec  latency 0.291 ms
+  32    182911  4012.34 MB/sec  warmup   8 sec  latency 0.247 ms
+  32    205081  3991.77 MB/sec  warmup   9 sec  latency 0.250 ms
+  32    227292  3975.34 MB/sec  warmup  10 sec  latency 0.224 ms
+  32    249657  3963.79 MB/sec  warmup  11 sec  latency 0.247 ms
+  32    293938  3808.39 MB/sec  execute   1 sec  latency 0.260 ms
+  32    315543  3773.96 MB/sec  execute   2 sec  latency 0.470 ms
+  32    337358  3770.73 MB/sec  execute   3 sec  latency 0.261 ms
+  32    359234  3771.62 MB/sec  execute   4 sec  latency 0.208 ms
+  32    381562  3786.49 MB/sec  execute   5 sec  latency 0.257 ms
+  32    403920  3799.03 MB/sec  execute   6 sec  latency 0.202 ms
+  32    426219  3810.82 MB/sec  execute   7 sec  latency 0.215 ms
+  32    448475  3824.40 MB/sec  execute   8 sec  latency 0.279 ms
+  32    470716  3836.92 MB/sec  execute   9 sec  latency 0.216 ms
+  32    492959  3863.36 MB/sec  execute  10 sec  latency 0.195 ms
+  32    514863  3860.50 MB/sec  execute  11 sec  latency 0.274 ms
+  32    536565  3849.75 MB/sec  execute  12 sec  latency 0.258 ms
+  32    558165  3840.81 MB/sec  execute  13 sec  latency 0.188 ms
+  32    579763  3832.66 MB/sec  execute  14 sec  latency 0.223 ms
+  32    601292  3825.21 MB/sec  execute  15 sec  latency 0.255 ms
+  32    622757  3818.71 MB/sec  execute  16 sec  latency 0.222 ms
+  32    644409  3813.78 MB/sec  execute  17 sec  latency 0.293 ms
+  32    665990  3808.58 MB/sec  execute  18 sec  latency 0.302 ms
+  32    687456  3803.20 MB/sec  execute  19 sec  latency 0.242 ms
+  32    709647  3804.05 MB/sec  execute  20 sec  latency 0.274 ms
+  32    731905  3806.08 MB/sec  execute  21 sec  latency 0.236 ms
+  32    753792  3804.08 MB/sec  execute  22 sec  latency 0.216 ms
+  32    775361  3800.38 MB/sec  execute  23 sec  latency 0.261 ms
+  32    796743  3796.05 MB/sec  execute  24 sec  latency 0.222 ms
+  32    818273  3793.84 MB/sec  execute  25 sec  latency 0.257 ms
+  32    840366  3794.27 MB/sec  execute  26 sec  latency 0.270 ms
+  32    862818  3797.58 MB/sec  execute  27 sec  latency 0.286 ms
+  32    884768  3798.62 MB/sec  execute  28 sec  latency 0.203 ms
+  32    906567  3799.01 MB/sec  execute  29 sec  latency 0.253 ms
+  32    927911  3799.52 MB/sec  execute  30 sec  latency 0.237 ms
+  32    949254  3799.05 MB/sec  execute  31 sec  latency 0.288 ms
+  32    970781  3800.62 MB/sec  execute  32 sec  latency 0.266 ms
+  32    992108  3797.34 MB/sec  execute  33 sec  latency 0.247 ms
+  32   1013428  3794.37 MB/sec  execute  34 sec  latency 0.217 ms
+  32   1034961  3792.90 MB/sec  execute  35 sec  latency 0.267 ms
+  32   1056655  3791.07 MB/sec  execute  36 sec  latency 0.255 ms
+  32   1078690  3791.78 MB/sec  execute  37 sec  latency 0.193 ms
+  32   1100912  3792.76 MB/sec  execute  38 sec  latency 0.268 ms
+  32   1122918  3792.94 MB/sec  execute  39 sec  latency 0.218 ms
+  32   1144809  3792.49 MB/sec  execute  40 sec  latency 0.297 ms
+  32   1167012  3793.13 MB/sec  execute  41 sec  latency 0.240 ms
+  32   1189194  3794.06 MB/sec  execute  42 sec  latency 0.243 ms
+  32   1211288  3794.37 MB/sec  execute  43 sec  latency 0.462 ms
+  32   1232941  3793.32 MB/sec  execute  44 sec  latency 0.237 ms
+  32   1254183  3790.39 MB/sec  execute  45 sec  latency 0.263 ms
+  32   1275832  3788.91 MB/sec  execute  46 sec  latency 0.263 ms
+  32   1297742  3789.56 MB/sec  execute  47 sec  latency 0.263 ms
+  32   1319786  3790.62 MB/sec  execute  48 sec  latency 0.284 ms
+  32   1341360  3789.91 MB/sec  execute  49 sec  latency 0.232 ms
+  32   1362899  3789.23 MB/sec  execute  50 sec  latency 0.255 ms
+  32   1384696  3789.71 MB/sec  execute  51 sec  latency 0.221 ms
+  32   1406600  3791.60 MB/sec  execute  52 sec  latency 0.216 ms
+  32   1428394  3793.07 MB/sec  execute  53 sec  latency 0.224 ms
+  32   1450008  3793.59 MB/sec  execute  54 sec  latency 0.259 ms
+  32   1471777  3792.93 MB/sec  execute  55 sec  latency 0.261 ms
+  32   1493206  3791.31 MB/sec  execute  56 sec  latency 0.316 ms
+  32   1514652  3790.09 MB/sec  execute  57 sec  latency 0.298 ms
+  32   1536442  3789.55 MB/sec  execute  58 sec  latency 0.311 ms
+  32   1558283  3789.19 MB/sec  execute  59 sec  latency 0.285 ms
+  32  cleanup  60 sec
+   0  cleanup  60 sec
+
+ Operation      Count    AvgLat    MaxLat
+ ----------------------------------------
+ NTCreateX    7236851     0.039     0.303
+ Close        5316047     0.039     0.290
+ Rename        306443     0.039     0.213
+ Unlink       1461404     0.039     0.276
+ Deltree          194     0.000     0.001
+ Mkdir             97     0.040     0.048
+ Qpathinfo    6559150     0.039     0.311
+ Qfileinfo    1149867     0.039     0.233
+ Qfsinfo      1202814     0.039     0.231
+ Sfileinfo     589520     0.039     0.189
+ Find         2536140     0.039     0.257
+ WriteX       3610225     0.052     0.298
+ ReadX        11344100     0.043     0.467
+ LockX          23568     0.039     0.135
+ UnlockX        23568     0.039     0.141
+ Flush         507233     0.039     0.283
+
+Throughput 3789.19 MB/sec  32 clients  32 procs  max_latency=0.470 ms
+2025-03-18 05:12:42 killall -KILL tbench_srv
