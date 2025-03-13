@@ -1,0 +1,41 @@
+pkgname=dbench
+pkgver=4
+pkgrel=0
+url='https://www.samba.org/ftp/tridge/dbench'
+arch=('i386' 'x86_64' 'aarch64' 'aarch64')
+license=('GPL')
+source=("https://www.samba.org/ftp/tridge/dbench/${pkgname}-${pkgver}.${pkgrel}.tar.gz")
+md5sums=('SKIP')
+
+build()
+{
+	cd $srcdir/${pkgname}-$pkgver.$pkgrel
+	cp -a ./*.txt /usr/local/share/
+
+	./autogen.sh || return
+	./configure CFLAGS=$(pkg-config --cflags smbclient) || return
+	# Fix libnfs.c:27:39: error: intptr_t undeclared (first use in this function); did you mean in_port_t?
+	# sed -i '/#include "nfs.h/a #include <stdint.h>' libnfs.c
+	# Fix fatal error: rpc/rpc.h: No such file or directory
+	[[ -e '/usr/include/rpc/rpc.h' ]] || cp /usr/include/tirpc/* /usr/include/ -rf
+	sed -i '/^LIBS=/ s/$/ -ltirpc/' Makefile
+	make dbench || return
+	make tbench || return
+	make tbench_srv || return
+	make install
+}
+
+package()
+{
+	benchmark_path="${pkgdir}/lkp/benchmarks/${pkgname}"
+	usr_path="${pkgdir}/usr"
+
+	mkdir -p $benchmark_path
+	mkdir -p $usr_path/local/bin
+	mkdir -p $usr_path/local/share
+
+	cd $srcdir/${pkgname}-$pkgver.$pkgrel
+	cp -a dbench tbench tbench_srv $usr_path/local/bin
+	cp -a /usr/local/share/*.txt $usr_path/local/share
+	touch $benchmark_path/empty
+}
