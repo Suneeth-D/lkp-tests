@@ -4,6 +4,7 @@
 # - sessions
 # - port
 # - numactl
+# - tune
 ## iperf is a tool for active measurements of the maximum achievable
 ## bandwidth on IP networks. It supports tuning of various parameters
 ## related to timing, protocols, and buffers. For each test
@@ -13,6 +14,18 @@
 
 numactl_server=""
 numactl_client=""
+
+
+tune_param()
+{
+    [ -n "$tune" ] || return
+
+    for kv in $tune; do
+        sysctl -w "$kv" > /dev/null
+    done
+}
+
+[ -n "$tune" ] && tune_param
 
 [ -n "$runtime" ] || runtime=300
 [ "$protocol" = udp ] && opt_udp=-u
