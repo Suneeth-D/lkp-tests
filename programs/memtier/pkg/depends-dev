@@ -1,4 +1,3 @@
 libevent-dev
 libevent-openssl
-libpcre3-dev
 zlib1g-dev

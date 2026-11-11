@@ -62,40 +62,68 @@ def memtier(line)
   end
 end
 
-while (line = $stdin.gets)
-  line = line.resolve_invalid_bytes
+$last_run_ops = nil
 
-  case line
-  when /^Sets/
-    extract_memtier(line, histo_sets_sum, histo_sets_num)
-  when /^Gets/
-    extract_memtier(line, histo_gets_sum, histo_gets_num)
-  when /^Waits/
-    extract_memtier(line, histo_waits_sum, histo_waits_num)
-  when /^Totals/
-    extract_memtier(line, histo_totals_sum, histo_totals_num)
-  when /^Request Latency Distribution/
-    proc_set_latencies = []
-    proc_set_latencies = []
-  when /^SET/
-    is_set = true
-    data = line.split
-    s_10us = (data[1].to_f * 100).to_i
-    proc_set_latencies[s_10us] = data[2].to_f
-  when /^GET/
-    is_set = false
-    data = line.split
-    s_10us = (data[1].to_f * 100).to_i
-    proc_get_latencies[s_10us] = data[2].to_f
-  when /^---$/
-    if is_set
-      set_latencies << proc_set_latencies
-    else
-      get_latencies << proc_get_latencies
-    end
-  else
-    memtier(line)
+def note_run_progress(line)
+  return false unless line =~ /\[RUN #.*\(avg:\s+([0-9.]+)\) ops\/sec/
+
+  $last_run_ops = $1.to_f
+  true
+end
+
+def totals_with_progress(line)
+  data = line.split
+  ops = data[1].to_f
+  if ops == 0 && $last_run_ops && $last_run_ops > 0
+    data[1] = format('%f', $last_run_ops)
+    line = data.join(' ')
   end
+  $last_run_ops = nil
+  line
+end
+
+while (raw = $stdin.gets)
+  raw.split(/\r/).each do |line|
+    line = line.resolve_invalid_bytes
+    next if line.strip.empty?
+    next if note_run_progress(line)
+
+    case line
+    when /^Sets/
+      extract_memtier(line, histo_sets_sum, histo_sets_num)
+    when /^Gets/
+      extract_memtier(line, histo_gets_sum, histo_gets_num)
+    when /^Waits/
+      extract_memtier(line, histo_waits_sum, histo_waits_num)
+    when /^Totals/
+      extract_memtier(totals_with_progress(line), histo_totals_sum, histo_totals_num)
+    when /^Request Latency Distribution/
+      proc_set_latencies = []
+      proc_get_latencies = []
+    when /^SET/
+      is_set = true
+      data = line.split
+      s_10us = (data[1].to_f * 100).to_i
+      proc_set_latencies[s_10us] = data[2].to_f
+    when /^GET/
+      is_set = false
+      data = line.split
+      s_10us = (data[1].to_f * 100).to_i
+      proc_get_latencies[s_10us] = data[2].to_f
+    when /^---$/
+      if is_set
+        set_latencies << proc_set_latencies
+      else
+        get_latencies << proc_get_latencies
+      end
+    else
+      memtier(line)
+    end
+  end
+end
+
+if $last_run_ops && $last_run_ops > 0
+  extract_memtier("Totals #{$last_run_ops} 0 0 0 0 0 0 0", histo_totals_sum, histo_totals_num)
 end
 
 def gen_output_sum(type, histo_sum)
@@ -104,16 +132,22 @@ def gen_output_sum(type, histo_sum)
   end
 end
 
+def safe_div(sum, num)
+  return 0 if num.nil? || num == 0
+
+  sum / num
+end
+
 def gen_output_avg(type, histo_sum, histo_num)
   (1...UNITS.size).each do |i|
-    avg = histo_sum[i] / histo_num[i]
+    avg = safe_div(histo_sum[i], histo_num[i])
     puts "avg_#{type}_#{UNITS[i]}: #{avg}"
   end
 end
 
 def gen_output_miss_rate(type, histo_sum, histo_num)
-  avg_hits = histo_sum[2] / histo_num[2]
-  avg_misses = histo_sum[3] / histo_num[3]
+  avg_hits = safe_div(histo_sum[2], histo_num[2])
+  avg_misses = safe_div(histo_sum[3], histo_num[3])
   avg_total = avg_hits + avg_misses
   return unless avg_total != 0
 
@@ -132,7 +166,10 @@ gen_output_avg('waits', histo_waits_sum, histo_waits_num)
 gen_output_avg('totals', histo_totals_sum, histo_totals_num)
 
 def normalize_latencies(latencies)
+  return if latencies.empty?
+
   maxcol = latencies.map(&:size).max
+  return if maxcol.nil?
   latencies.each do |proc_latencies|
     prev = 0
     (0...maxcol).map do |i|
