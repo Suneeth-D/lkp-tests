@@ -1,16 +1,30 @@
 pkgname=redis
-pkgver=git
+pkgver=7.0.11
 pkgrel=0
 arch=('i386' 'x86_64' 'aarch64')
 url="https://redis.io"
 license=('BSD')
 depends=()
-source=("https://github.com/redis/redis.git#branch=unstable")
+source=("https://download.redis.io/releases/redis-${pkgver}.tar.gz")
 sha256sums=('SKIP')
 
 . $LKP_SRC/lib/tests/pkgbuild.sh
 
+prepare()
+{
+	prepare_benchmark_path
+	rename_versioned_src_pkg_dir
+}
+
+build()
+{
+	cd_src_pkg_dir
+
+	make -j"$(nproc)"
+}
+
 package()
 {
+	prepare_benchmark_path
 	make_install_src_pkg PREFIX=$benchmark_path
 }

@@ -18,6 +18,10 @@ parse_numa_node_binding "$redis_cpu_node_bind" "$redis_mem_node_bind"
 
 : "${instance_id:=1}"
 
+if [ -n "$server_cpu_list" ]; then
+	exit 0
+fi
+
 # start redis server
 for i in $(seq 1 "${nr_processes}"); do
 	port=$((6379 + i + instance_id))
