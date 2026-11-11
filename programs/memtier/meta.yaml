@@ -27,6 +27,17 @@ parameters:
   key_max:
   n_client:
   n_pipeline:
+  cpu_bind_list:
+  mem_bind:
+  server_cpu_list:
+  server_mem_bind:
+  share_keyspace:
+  warmup_allkeys:
+  data_size_list:
+  key_prefix:
+  key_stddev:
+  distinct_client_seed:
+  hide_histogram:
 
 results:
   memtier.preload_duration:

@@ -36,27 +36,57 @@ prepare_exec_path memtier_benchmark
 : "${nr_instances:=1}"
 : "${instance_id:=1}"
 
+memtier_numa_bind()
+{
+	local i=$1
+
+	if [[ -n "$cpu_bind_list" ]]; then
+		echo "numactl -C $cpu_bind_list -m ${mem_bind} --"
+	else
+		numa_node_binding "$i"
+	fi
+}
+
 memtier_dir="$TMP/memtier-$instance_id"
 rm -rf "$memtier_dir"
 mkdir -p "$memtier_dir"
 
 [[ -n "$key_max" ]] || die "$(basename $0) key_max must be specified!\n"
 
-proc_key_max=$((key_max / nr_processes / nr_instances))
+if [[ "$share_keyspace" = true ]]; then
+	proc_key_max=$key_max
+else
+	proc_key_max=$((key_max / nr_processes / nr_instances))
+fi
 
-opt1="--key-minimum=$key_min --threads=$nr_threads"
+opt1="--threads=$nr_threads"
+# memtier rejects an explicit minimum of 0 and uses 0 when the flag is absent
+[[ "$key_min" -gt 0 ]] && opt1="--key-minimum=$key_min $opt1"
 
-[[ -n "$data_size" ]] && opt1="$opt1 -d $data_size"
+if [[ -n "$data_size_list" ]]; then
+	opt1="$opt1 --data-size-list=$data_size_list"
+elif [[ -n "$data_size" ]]; then
+	opt1="$opt1 -d $data_size"
+fi
 [[ -n "$n_client" ]] && opt1="$opt1 -c $n_client"
 [[ -n "$n_pipeline" ]] && opt1="$opt1 --pipeline=$n_pipeline"
 [[ -n "$n_protocol" ]] && opt1="$opt1 --protocol=$n_protocol"
 
 opt="$opt1 --key-maximum=$proc_key_max"
 
+[[ -n "$key_prefix" ]] && opt="$opt --key-prefix=$key_prefix"
+[[ -n "$key_stddev" ]] && opt="$opt --key-stddev=$key_stddev"
+[[ "$distinct_client_seed" = true ]] && opt="$opt --distinct-client-seed"
+[[ "$hide_histogram" = true ]] && opt="$opt --hide-histogram"
+
 if [[ -n "$requests" ]] || [[ -n "$requests_multiple" ]]; then
 	: "${requests_multiple:=1}"
 	[[ -z "$requests" ]] && requests=$((key_max * requests_multiple))
-	proc_requests=$((requests / nr_processes / nr_instances))
+	if [[ "$share_keyspace" = true ]]; then
+		proc_requests=$requests
+	else
+		proc_requests=$((requests / nr_processes / nr_instances))
+	fi
 	opt_requests="-n $proc_requests"
 else
 	opt_time="--test-time=$runtime"
@@ -64,39 +94,97 @@ fi
 
 parse_numa_node_binding "$cpu_node_bind" "$mem_node_bind"
 
+if [[ -n "$cpu_bind_list" && -z "$mem_bind" ]]; then
+	die "$(basename "$0") mem_bind must be specified!\n"
+fi
+
+if [[ -n "$server_cpu_list" ]]; then
+	redis_server=$BENCHMARK_ROOT/redis/bin/redis-server
+	[[ -x "$redis_server" ]] || die "$(basename "$0") redis-server not found: $redis_server\n"
+	[[ -n "$server_mem_bind" ]] || die "$(basename "$0") server_mem_bind must be specified!\n"
+
+	read -r -a server_cpus <<< "$(expand_cpu_list "$server_cpu_list")"
+	if [[ ${#server_cpus[@]} -lt $nr_processes ]]; then
+		die "$(basename "$0") server_cpu_list has ${#server_cpus[@]} cpus, need $nr_processes\n"
+	fi
+
+	bg_pids=""
+	for i in $(seq 1 "${nr_processes}"); do
+		port=$((6379 + i + instance_id))
+		cpu=${server_cpus[$((i - 1))]}
+		log_eval "numactl -C $cpu -m $server_mem_bind -- $redis_server --bind 127.0.0.1 --save \"\" --loglevel verbose --port $port >\"$TMP/redis-$port.out\" 2>&1 &"
+		bg_pids="$bg_pids $!"
+		sleep 0.05
+	done
+
+	echo "$bg_pids" >"$TMP"/pid-daemons
+
+	cat >"$TMP_RESULT_ROOT/post-run.redis" <<EOF
+/bin/kill -9 $bg_pids
+EOF
+
+	sleep 5
+fi
+
 if [[ -n "$preload" ]]; then
 	begin=$(date +%s.%N)
 	if [[ -n "$ppreload_percent" ]]; then
 		ppreload_key_max=$((key_max * ppreload_percent / 100))
-		ppreload_proc_key_max=$((ppreload_key_max / nr_processes / nr_instances))
 		ppreload_requests=$((ppreload_key_max * 2))
-		ppreload_proc_requests=$((ppreload_requests / nr_processes / nr_instances))
+		if [[ "$share_keyspace" = true ]]; then
+			ppreload_proc_key_max=$ppreload_key_max
+			ppreload_proc_requests=$ppreload_requests
+		else
+			ppreload_proc_key_max=$((ppreload_key_max / nr_processes / nr_instances))
+			ppreload_proc_requests=$((ppreload_requests / nr_processes / nr_instances))
+		fi
+		client_pids=()
 		for i in $(seq 1 "${nr_processes}"); do
 			port=$((6379 + i + instance_id))
-			numa_bind=$(numa_node_binding "$i")
+			numa_bind=$(memtier_numa_bind "$i")
 			log_test $numa_bind memtier_benchmark $opt1 --key-maximum=$ppreload_proc_key_max --ratio="100:1" -n $ppreload_proc_requests --key-pattern=$preload_key_pattern -p $port >/dev/null &
+			client_pids+=($!)
 		done
-		wait
+		wait "${client_pids[@]}"
 	fi
 
 	preload_requests=$((key_max * 2))
-	preload_proc_requests=$((preload_requests / nr_processes / nr_instances))
+	if [[ "$share_keyspace" = true ]]; then
+		preload_proc_requests=$preload_requests
+	else
+		preload_proc_requests=$((preload_requests / nr_processes / nr_instances))
+	fi
+	client_pids=()
 	for i in $(seq 1 "${nr_processes}"); do
 		port=$((6379 + i + instance_id))
-		numa_bind=$(numa_node_binding "$i")
+		numa_bind=$(memtier_numa_bind "$i")
 		log_test $numa_bind memtier_benchmark $opt --ratio="100:1" -n $preload_proc_requests --key-pattern=$preload_key_pattern -p $port >/dev/null &
+		client_pids+=($!)
 	done
-	wait
+	wait "${client_pids[@]}"
 	end=$(date +%s.%N)
 	duration=$(echo "$end-$begin" | bc)
 	echo "preload duration: $duration"
 fi
 
+if [[ "$warmup_allkeys" = true ]]; then
+	client_pids=()
+	for i in $(seq 1 "${nr_processes}"); do
+		port=$((6379 + i + instance_id))
+		numa_bind=$(memtier_numa_bind "$i")
+		log_test $numa_bind memtier_benchmark $opt -n allkeys --ratio=1:0 --key-pattern=$key_pattern -p $port >/dev/null &
+		client_pids+=($!)
+	done
+	wait "${client_pids[@]}"
+fi
+
+client_pids=()
 for i in $(seq 1 "${nr_processes}"); do
 	port=$((6379 + i + instance_id))
-	numa_bind=$(numa_node_binding "$i")
+	numa_bind=$(memtier_numa_bind "$i")
 	log_test $numa_bind memtier_benchmark $opt $opt_time $opt_requests --ratio=$n_ratio --key-pattern=$key_pattern -p $port >$memtier_dir/memtier.$i &
+	client_pids+=($!)
 done
-wait
+wait "${client_pids[@]}"
 
 cat "$memtier_dir"/memtier.*

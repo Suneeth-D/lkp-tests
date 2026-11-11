@@ -1,14 +1,20 @@
 pkgname=memtier
-pkgver=git
+pkgver=2.1.2
 pkgrel=1
 arch=('i386' 'x86_64' 'aarch64')
 url="https://github.com/RedisLabs/memtier_benchmark"
 license=('GPL2 ')
 depends=()
-source=("$pkgname"::"https://github.com/RedisLabs/memtier_benchmark.git")
+source=("https://github.com/RedisLabs/memtier_benchmark/archive/refs/tags/${pkgver}.tar.gz")
 sha256sums=('SKIP')
 
 . $LKP_SRC/lib/tests/pkgbuild.sh
+
+prepare()
+{
+	prepare_benchmark_path
+	rename_versioned_src_pkg_dir "memtier_benchmark-$pkgver"
+}
 
 build()
 {
@@ -21,5 +27,6 @@ build()
 
 package()
 {
+	prepare_benchmark_path
 	pack_src_pkg_contents memtier_benchmark
 }
