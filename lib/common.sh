@@ -112,16 +112,21 @@ parse_bool()
 	return 0
 }
 
+# Expand "0-3,8" into a space-separated list (one line; safe for read -a <<<).
 expand_cpu_list()
 {
 	cpu_list=$1
+	out=
 	for pair in $(echo "$cpu_list" | tr ',' ' '); do
 		if [ "${pair%%-*}" != "$pair" ]; then
-			seq "${pair%-*}" "${pair#*-}"
+			for cpu in $(seq "${pair%-*}" "${pair#*-}"); do
+				out="$out $cpu"
+			done
 		else
-			echo "$pair"
+			out="$out $pair"
 		fi
 	done
+	echo "${out# }"
 }
 
 cpu_list_count()
